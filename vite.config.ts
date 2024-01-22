@@ -18,4 +18,11 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: '@import "./assets/global-style.scss";' //这边用了路径别名
+      },
+    },
+  }
 }));
