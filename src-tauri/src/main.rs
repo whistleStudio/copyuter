@@ -51,9 +51,6 @@ fn start_record (window: Window) {
 fn stop_record () {
   unsafe { 
     IS_START = false;
-    println!("----- EV_VEC ------");
-    // println!("{:?}", EV_VEC); 
-    println!("-------------------");
   }
 }
 
@@ -65,11 +62,8 @@ fn repeat (window: Window) {
   sleep(Duration::from_millis(500));
   let mut pre_ev:Option<Ev> = None;
   unsafe {
-    // println!("{:?}", EV_VEC);
     for ev in &EV_VEC {
       if let Some(_) = pre_ev {
-        // let cur_t = serde_json::from_str::<SystemTime>(&ev.time).unwrap();
-        // let pre_t = serde_json::from_str::<SystemTime>(&pre_ev.unwrap().time).unwrap();
         let inv = ev.time.duration_since(pre_ev.expect("1111").time).expect("2222");
         sleep(inv);
       }
@@ -79,44 +73,50 @@ fn repeat (window: Window) {
   }
 }
 
+/* 保存 */
 #[tauri::command]
 fn save () {
-
-  // let t = SystemTime::now();
-  // let serialized = serde_json::to_string(&t).unwrap();
-  // let deserialized: SystemTime = serde_json::from_str(&serialized).unwrap();
-
-  // println!("{:?}", serialized);
-  // println!("{:?}", deserialized);
-
   unsafe {
     if EV_VEC.len() > 0 {
-      // let e = format!("{:?}", EV_VEC);
-      // let mut f = LOG_FILE.as_mut().unwrap();
-      // f.write(e.as_bytes()).unwrap();
-      let serialized = serde_json::to_string(&EV_VEC[0]).unwrap();
-      let deserialized: Ev = serde_json::from_str(&serialized).unwrap();
-      println!("{:?}", serialized);
-      println!("{:?}", deserialized);
+      LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open("ev_logs/ev.log").ok();
+      let serialized = serde_json::to_string(&EV_VEC).unwrap();
+      LOG_FILE.as_ref().unwrap().write(serialized.as_bytes()).unwrap();
+      // println!("{:?}", serialized);
+      // // println!("{:?}", deserialized);
     }
-    
-    // let serialized = serde_json::to_string(&e).unwrap();
+  }
+}
 
+/* 获取文件名 */
+#[tauri::command]
+fn get_filenames () ->Vec<String> {
+  let paths = fs::read_dir("ev_logs/").unwrap();
+  let log_arr = paths.map(
+    |f| f.unwrap().path().file_name().unwrap().to_str().unwrap().to_owned())
+    .collect::<Vec<_>>();
+  log_arr
+}
+
+/* 运行指定文件 */
+#[tauri::command]
+fn run_log (window: Window, f: String) -> i8{
+  println!("{}", f);
+  unsafe {
+    LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open(format!("{}{}", "ev_logs/", f)).ok();
+    let mut buf = "".to_owned();
+    LOG_FILE.as_ref().unwrap().read_to_string(&mut buf).unwrap();
+    println!("{}", buf);
+    serde_json::from_str::<Vec<Ev>>(&buf).map_or(-1, |v| {
+      EV_VEC = v;
+      repeat(window);
+      0
+    })
   }
 }
 
 fn init () {
-  unsafe {
-    let paths = fs::read_dir("ev_logs").unwrap();
-    // println!("{:?}", paths.cloned());
-    for path in paths {
-      println!("{}", path.unwrap().path().display())
-    }
-
-    // LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open("ev_logs/events.log").ok();
-    // let mut buf = "".to_owned();
-    // let _ = LOG_FILE.as_ref().unwrap().read_to_string(&mut buf);
-  }
+  // let serialized = serde_json::to_string::<Vec<i32>>(&vec![]).unwrap();
+  // let deserialized: Vec<i32> = serde_json::from_str(&serialized).unwrap();
 }
 
 
@@ -140,7 +140,7 @@ fn tauri_run () {
           main_window.minimize().expect("err");
           Ok(())
       })
-      .invoke_handler(tauri::generate_handler![start_record, stop_record, repeat, save])
+      .invoke_handler(tauri::generate_handler![start_record, stop_record, repeat, save, get_filenames, run_log])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");
 }

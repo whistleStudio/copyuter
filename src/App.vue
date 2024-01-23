@@ -5,22 +5,23 @@
   <div class="btn-group">
     <button @click="start">开始</button>
     <button @click="over">结束</button>
-    <button @click="invoke('repeat')">重复</button>
+    <button @click="invoke('repeat')">测试</button>
     <button @click="invoke('save')">保存</button>
   </div>
   <ul class="logs">
-    <li v-for="i in 3">
+    <li v-for="(v, i) in logList">
       <input v-if="i == curLogIdx" type="text">
-      <div v-else></div>
+      <div v-else>{{ v }}</div>
       <button @click="curLogIdx = i">编辑</button>
-      <button>运行</button>
+      <button @click="runLog(v)">运行</button>
+      <button>删除</button>
     </li>
   </ul>
   </template>
   
   
   <script setup lang="ts">
-    import {ref, Ref} from "vue"
+    import {ref, Ref, onMounted, reactive} from "vue"
     import { invoke } from "@tauri-apps/api";
     // import { listen, UnlistenFn} from '@tauri-apps/api/event';
     // import { appWindow } from "@tauri-apps/api/window";
@@ -36,6 +37,7 @@
   
     // const res: Ref<number | null> = ref(null)
     const curLogIdx: Ref<number> = ref(-1)
+    const logList: String[] = reactive([]);
     
     function start () {
       invoke("start_record")
@@ -44,6 +46,15 @@
     function over () {
       invoke("stop_record")
     }
+
+    /* 点击运行 */
+    function runLog (f: String) {
+      invoke<number>("run_log", {f}).then(err => console.log(err));
+    }
+
+    onMounted (() => {
+      invoke<String[]>("get_filenames").then(d => logList.push(...d))
+    })
   </script>
   
   
