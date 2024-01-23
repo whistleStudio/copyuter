@@ -2,11 +2,12 @@
   <div>
     <!-- 计算结果：{{ res }} -->
   </div>
-  <div class="btn-group">
-    <button @click="start">开始</button>
+  <div class="btn-group1">
+    <button type="button" class="btn btn-primary" @click="start">开始</button>
     <button @click="over">结束</button>
     <button @click="invoke('repeat')">测试</button>
-    <button @click="invoke('save')">保存</button>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" 
+    @click="invoke('save')">保存</button>
   </div>
   <ul class="logs">
     <li v-for="(v, i) in logList">
@@ -17,12 +18,25 @@
       <button>删除</button>
     </li>
   </ul>
+
+  <a-space wrap>
+    <a-button type="primary">Primary Button</a-button>
+    <a-button>Default Button</a-button>
+    <a-button type="dashed">Dashed Button</a-button>
+    <a-button type="text">Text Button</a-button>
+    <a-button type="link">Link Button</a-button>
+  </a-space>
+
+
+
+
   </template>
   
   
   <script setup lang="ts">
     import {ref, Ref, onMounted, reactive} from "vue"
     import { invoke } from "@tauri-apps/api";
+    // import * as bootstrap from 'bootstrap';
     // import { listen, UnlistenFn} from '@tauri-apps/api/event';
     // import { appWindow } from "@tauri-apps/api/window";
   
@@ -59,7 +73,7 @@
   
   
   <style scoped lang="scss">
-  .btn-group {
+  .btn-group1 {
     button {
       margin:10px 10px 10px 0;
     }
