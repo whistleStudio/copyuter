@@ -5,7 +5,7 @@
 
 use std::{thread::sleep, time::{Duration, SystemTime}, fs, fs::{OpenOptions, File}, io::{Read, Write}};
 use serde::{Serialize, Deserialize};
-use tauri::{Manager, Window};
+use tauri::Window;
 use rdev::{self, simulate, EventType};
 use serde_json;
 
@@ -75,43 +75,54 @@ fn repeat (window: Window) {
 
 /* 保存 */
 #[tauri::command]
-fn save () {
+fn save (name: &str) -> i8 {
   unsafe {
     if EV_VEC.len() > 0 {
-      LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open("ev_logs/ev.log").ok();
+      LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open("./ev_logs/".to_owned()+name).ok();
       let serialized = serde_json::to_string(&EV_VEC).unwrap();
       LOG_FILE.as_ref().unwrap().write(serialized.as_bytes()).unwrap();
-      // println!("{:?}", serialized);
-      // // println!("{:?}", deserialized);
-    }
+      return 0;
+    } else {return 1;}
   }
 }
 
 /* 获取文件名 */
 #[tauri::command]
 fn get_filenames () ->Vec<String> {
-  let paths = fs::read_dir("ev_logs/").unwrap();
+  fs::create_dir_all("./ev_logs").unwrap();
+  let paths = fs::read_dir("./ev_logs/").unwrap();
   let log_arr = paths.map(
     |f| f.unwrap().path().file_name().unwrap().to_str().unwrap().to_owned())
     .collect::<Vec<_>>();
   log_arr
 }
 
-/* 运行指定文件 */
+/* 记录编辑 */
+#[tauri::command]
+fn edit_log (from: &str, to: &str) -> i8 {
+  let d = "./ev_logs/".to_owned();
+  fs::rename(d.clone()+from, d+to).map_or(1, |_|0)
+}
+
+/* 记录运行 */
 #[tauri::command]
 fn run_log (window: Window, f: String) -> i8{
-  println!("{}", f);
   unsafe {
-    LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open(format!("{}{}", "ev_logs/", f)).ok();
+    LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open(format!("{}{}", "./ev_logs/", f)).ok();
     let mut buf = "".to_owned();
     LOG_FILE.as_ref().unwrap().read_to_string(&mut buf).unwrap();
-    println!("{}", buf);
-    serde_json::from_str::<Vec<Ev>>(&buf).map_or(-1, |v| {
+    serde_json::from_str::<Vec<Ev>>(&buf).map_or(1, |v| {
       EV_VEC = v;
       repeat(window);
       0
     })
   }
+}
+
+/* 记录删除 */
+#[tauri::command]
+fn delete_log (f: String) -> i8{
+  fs::remove_file(format!("{}{}", "./ev_logs/", f)).map_or(1, |_|0)
 }
 
 fn init () {
@@ -123,7 +134,6 @@ fn init () {
 #[tokio::main]
 async fn main() {
     println!("start");
-
     init();
     tauri_run();
 
@@ -132,15 +142,8 @@ async fn main() {
 fn tauri_run () {
   tokio::spawn(listen_event());
   tauri::Builder::default()
-      .setup(|app|{
-          let main_window = app.get_window("main").unwrap();
-          main_window.listen("event-name", |event| {
-            println!("got window event-name with payload {:?}", event.payload());
-          });
-          main_window.minimize().expect("err");
-          Ok(())
-      })
-      .invoke_handler(tauri::generate_handler![start_record, stop_record, repeat, save, get_filenames, run_log])
+      .invoke_handler(tauri::generate_handler![start_record, stop_record, repeat, save, 
+        get_filenames, edit_log, run_log, delete_log])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");
 }
