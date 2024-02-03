@@ -21,7 +21,7 @@ export default defineConfig(async () => ({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: '@import "./assets/global-style.scss";' //这边用了路径别名
+        additionalData: '@import "/src/assets/global-style.scss";' //这边用了路径别名
       },
     },
   }

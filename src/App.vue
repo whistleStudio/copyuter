@@ -3,9 +3,12 @@
   <div class="btn-group1">
     <a-button type="primary" @click="start">开始</a-button>
     <a-button type="primary" @click="over">结束</a-button>
-    <a-button type="primary" @click="invoke('repeat')">测试</a-button>
+    <a-button type="primary" @click="test">测试</a-button>
     <a-button type="primary" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" 
     @click="save">保存</a-button>
+    <a-button type="primary" @click="globalIconShow(0)">窗口0</a-button>
+    <a-button type="primary" @click="globalIconShow(1)">窗口1</a-button>
+
   </div>
   <ul class="logs">
     <li v-for="(v, i) in logList" :class="{active: curLogIdx==i}">
@@ -29,17 +32,28 @@
     import { invoke } from "@tauri-apps/api";
     import { message } from 'ant-design-vue';
     const [messageApi, contextHolder] = message.useMessage();
+    import { WebviewWindow } from '@tauri-apps/api/window'
+import { listen } from "@tauri-apps/api/event";
 
     const curLogIdx: Ref<number> = ref(-1), open = ref(false), logName = ref(""), modalMode = ref(0),
       modalTitles= ref(["", "新建动作名称", "重命名动作名称"])
     const logList: string[] = reactive([])
+    let recDot: WebviewWindow | undefined;
     
     function start () {
       invoke("start_record")
+      globalIconShow(0)
     }
   
     function over () {
       invoke("stop_record")
+      globalIconHide()
+    }
+
+    async function test () {
+      invoke('repeat')
+      globalIconShow(1)
+      ;(await listen("repeat_over", () => globalIconHide()))()
     }
 
     function save () {
@@ -53,10 +67,12 @@
     }
 
     /* 记录运行 */
-    function runLog (f: string) {
+    async function runLog (f: string) {
       invoke<number>("run_log", {f}).then(err => {
         if (err) messageApi.error("运行失败：当前动作异常")
       });
+      globalIconShow(1)
+      ;(await listen("repeat_over", () => globalIconHide()))()
     }
 
     /* 记录删除 */
@@ -114,8 +130,33 @@
       curLogIdx.value = -1
     }
 
+    /* 全局图标:显示 */
+    function globalIconShow (i: number) {
+        // invoke("change_i", {window: recDot, i})
+        recDot?.show()
+        recDot?.emit("change", {i})
+    }
+    /* 全局图标:隐藏 */
+    function globalIconHide () {
+      recDot?.hide()
+      recDot?.emit("change", {i: -1})
+    }
+
+
     onMounted (() => {
       invoke<string[]>("get_filenames").then(d => logList.push(...(d.map(v => v.slice(0, -4)))))
+
+      recDot = new WebviewWindow('globalIconWin', {
+        url: 'src/assets/test.html',
+        decorations: false,
+        transparent: true,
+        fileDropEnabled: true,
+        skipTaskbar: false,
+        visible: false,
+        alwaysOnTop: true,
+        x: screen.width - 200,
+        y: screen.height - 200
+      })
     })
   </script>
   

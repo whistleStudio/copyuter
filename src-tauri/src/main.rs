@@ -71,6 +71,7 @@ fn repeat (window: Window) {
       pre_ev = Some(ev.clone());
     }
   }
+  window.emit("repeat-over", 0).unwrap();
 }
 
 /* 保存 */
@@ -93,7 +94,7 @@ fn get_filenames () ->Vec<String> {
   let paths = fs::read_dir("./ev_logs/").unwrap();
   let log_arr = paths.map(
     |f| f.unwrap().path().file_name().unwrap().to_str().unwrap().to_owned())
-    .collect::<Vec<_>>();
+    .collect::<Vec<String>>();
   log_arr
 }
 
@@ -106,7 +107,7 @@ fn edit_log (from: &str, to: &str) -> i8 {
 
 /* 记录运行 */
 #[tauri::command]
-fn run_log (window: Window, f: String) -> i8{
+async fn run_log (window: Window, f: String) -> i8{
   unsafe {
     LOG_FILE = OpenOptions::new().read(true).write(true).create(true).open(format!("{}{}", "./ev_logs/", f)).ok();
     let mut buf = "".to_owned();
@@ -131,6 +132,22 @@ fn init () {
 }
 
 
+/* 圆点 */
+#[tauri::command]
+async fn open_docs(handle: tauri::AppHandle) {
+  let docs_window = tauri::WindowBuilder::new(
+    &handle,
+    "external", /* the unique window label */
+    tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
+  ).build().unwrap();
+}
+
+#[tauri::command]
+async fn change_i (window: Window, i: i32) {
+  println!("{:?}", window);
+  println!("{}", i)
+}
+
 #[tokio::main]
 async fn main() {
     println!("start");
@@ -143,7 +160,7 @@ fn tauri_run () {
   tokio::spawn(listen_event());
   tauri::Builder::default()
       .invoke_handler(tauri::generate_handler![start_record, stop_record, repeat, save, 
-        get_filenames, edit_log, run_log, delete_log])
+        get_filenames, edit_log, run_log, delete_log, open_docs, change_i])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");
 }
