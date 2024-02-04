@@ -71,7 +71,8 @@ fn repeat (window: Window) {
       pre_ev = Some(ev.clone());
     }
   }
-  window.emit("repeat-over", 0).unwrap();
+  window.emit("repeat_over", 0).unwrap();
+
 }
 
 /* 保存 */
@@ -133,14 +134,14 @@ fn init () {
 
 
 /* 圆点 */
-#[tauri::command]
-async fn open_docs(handle: tauri::AppHandle) {
-  let docs_window = tauri::WindowBuilder::new(
-    &handle,
-    "external", /* the unique window label */
-    tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
-  ).build().unwrap();
-}
+// #[tauri::command]
+// async fn open_docs(handle: tauri::AppHandle) {
+//   let docs_window = tauri::WindowBuilder::new(
+//     &handle,
+//     "external", /* the unique window label */
+//     tauri::WindowUrl::External("https://tauri.app/".parse().unwrap())
+//   ).build().unwrap();
+// }
 
 #[tauri::command]
 async fn change_i (window: Window, i: i32) {
@@ -160,7 +161,7 @@ fn tauri_run () {
   tokio::spawn(listen_event());
   tauri::Builder::default()
       .invoke_handler(tauri::generate_handler![start_record, stop_record, repeat, save, 
-        get_filenames, edit_log, run_log, delete_log, open_docs, change_i])
+        get_filenames, edit_log, run_log, delete_log, change_i])
       .run(tauri::generate_context!())
       .expect("error while running tauri application");
 }

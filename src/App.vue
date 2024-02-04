@@ -72,7 +72,8 @@ import { listen } from "@tauri-apps/api/event";
         if (err) messageApi.error("运行失败：当前动作异常")
       });
       globalIconShow(1)
-      ;(await listen("repeat_over", () => globalIconHide()))()
+      listen("repeat_over", () => {console.log("repeat over"); globalIconHide()})
+      console.log("oooo")
     }
 
     /* 记录删除 */
