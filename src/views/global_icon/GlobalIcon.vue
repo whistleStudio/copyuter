@@ -1,7 +1,7 @@
 <template>
-<div class="global-icon" :class="{rec: iconId==0, play: iconId==1}">
-
-</div>
+    <div class="global-icon" :class="{rec: iconId==0, play: iconId==1}">
+    
+    </div>
 </template>
 
 
@@ -34,8 +34,8 @@ listen<P>("change", ev  => {
   &.play {
     width: 0;
     border: solid transparent;
-    border-width: 25px 40px 25px 0px;
-    border-right-color: green;
+    border-width: 25px 0px 25px 40px;
+    border-left-color: green;
   }
 
   @keyframes blink {
@@ -45,3 +45,4 @@ listen<P>("change", ev  => {
 }
 
 </style>
+    

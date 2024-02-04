@@ -33,7 +33,7 @@
     import { message } from 'ant-design-vue';
     const [messageApi, contextHolder] = message.useMessage();
     import { WebviewWindow } from '@tauri-apps/api/window'
-import { listen } from "@tauri-apps/api/event";
+    import { once } from "@tauri-apps/api/event";
 
     const curLogIdx: Ref<number> = ref(-1), open = ref(false), logName = ref(""), modalMode = ref(0),
       modalTitles= ref(["", "新建动作名称", "重命名动作名称"])
@@ -47,13 +47,13 @@ import { listen } from "@tauri-apps/api/event";
   
     function over () {
       invoke("stop_record")
-      globalIconHide()
+      globalIconShow(-1)
     }
 
     async function test () {
       invoke('repeat')
       globalIconShow(1)
-      ;(await listen("repeat_over", () => globalIconHide()))()
+      once("repeat_over", () => globalIconShow(-1))
     }
 
     function save () {
@@ -72,7 +72,7 @@ import { listen } from "@tauri-apps/api/event";
         if (err) messageApi.error("运行失败：当前动作异常")
       });
       globalIconShow(1)
-      listen("repeat_over", () => {console.log("repeat over"); globalIconHide()})
+      once("repeat_over", () => {console.log("repeat over"); globalIconShow(-1)})
       console.log("oooo")
     }
 
@@ -133,22 +133,18 @@ import { listen } from "@tauri-apps/api/event";
 
     /* 全局图标:显示 */
     function globalIconShow (i: number) {
-        // invoke("change_i", {window: recDot, i})
-        recDot?.show()
+        if (i < 0) recDot?.hide() 
+        else recDot?.show()
         recDot?.emit("change", {i})
     }
-    /* 全局图标:隐藏 */
-    function globalIconHide () {
-      recDot?.hide()
-      recDot?.emit("change", {i: -1})
-    }
+
 
 
     onMounted (() => {
       invoke<string[]>("get_filenames").then(d => logList.push(...(d.map(v => v.slice(0, -4)))))
 
       recDot = new WebviewWindow('globalIconWin', {
-        url: 'src/assets/test.html',
+        url: 'src/views/global_icon/global_icon.html',
         decorations: false,
         transparent: true,
         fileDropEnabled: true,

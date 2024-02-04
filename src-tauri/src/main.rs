@@ -5,7 +5,7 @@
 
 use std::{thread::sleep, time::{Duration, SystemTime}, fs, fs::{OpenOptions, File}, io::{Read, Write}};
 use serde::{Serialize, Deserialize};
-use tauri::Window;
+use tauri::{async_runtime::block_on, Window};
 use rdev::{self, simulate, EventType};
 use serde_json;
 
@@ -56,7 +56,7 @@ fn stop_record () {
 
 /* 重复 */
 #[tauri::command]
-fn repeat (window: Window) {
+async fn repeat (window: Window) {
   println!("repeat");
   window.minimize().expect("repeat mini err");
   sleep(Duration::from_millis(500));
@@ -115,7 +115,7 @@ async fn run_log (window: Window, f: String) -> i8{
     LOG_FILE.as_ref().unwrap().read_to_string(&mut buf).unwrap();
     serde_json::from_str::<Vec<Ev>>(&buf).map_or(1, |v| {
       EV_VEC = v;
-      repeat(window);
+      block_on(repeat(window));
       0
     })
   }
