@@ -1,0 +1,43 @@
+.btn-group1 {
+    button {
+      margin:10px 10px 10px 0;
+    }
+  }
+  .logs {
+    li {
+      margin: 10px 0 10px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      &:hover {
+        background-color: rgba(220, 220, 220, 0.3);
+      }
+      &.active {
+        background: rgb(220, 220, 220);
+      }
+      >input{
+        width: 260px;
+        height: 20px;
+      }
+      >div {
+        width: 300px;
+        line-height: 50px;
+
+        display: inline-block;
+      }
+      button {
+        margin-left: 20px;
+      }
+    }
+  }
+  .bg {
+    width: 100vw;
+    height: 100vh;
+    background: url("./assets/128x128@2x.png") center no-repeat;
+    opacity: 0.2;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+  }
+  
